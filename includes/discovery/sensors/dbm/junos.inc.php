@@ -70,3 +70,39 @@ foreach ($pre_cache['junos_oids'] as $index => $entry) {
         }
     }
 }
+foreach ($pre_cache['junos_ifoptics_oids'] as $index => $entry) {
+    if (is_numeric($entry['jnxPMCurRxInputPower'])) {
+        $oid = '.1.3.6.1.4.1.2636.3.71.1.2.1.1.8.'.$index;
+        $descr = dbFetchCell('SELECT `ifDescr` FROM `ports` WHERE `ifIndex`= ? AND `device_id` = ?', array($index, $device['device_id'])) . ' Rx Power';
+        # $limit_low = $entry['jnxDomCurrentRxLaserPowerLowAlarmThreshold']/$divisor;
+        $limit_low = null;
+        # $warn_limit_low = $entry['jnxDomCurrentRxLaserPowerLowWarningThreshold']/$divisor;
+        $warn_limit_low = null;
+        # $limit = $entry['jnxDomCurrentRxLaserPowerHighAlarmThreshold']/$divisor;
+        $limit = null;
+        # $warn_limit = $entry['jnxDomCurrentRxLaserPowerHighWarningThreshold']/$divisor;
+        $warn_limit = null;
+        $current = $entry['jnxPMCurRxInputPower'];
+        $entPhysicalIndex = $index;
+        $entPhysicalIndex_measured = 'ports';
+        discover_sensor($valid['sensor'], 'dbm', $device, $oid, 'rx-'.$index, 'junos', $descr, $divisor, $multiplier, $limit_low, $warn_limit_low, $warn_limit, $limit, $current, 's
+nmp', $entPhysicalIndex, $entPhysicalIndex_measured);
+    }
+    if (is_numeric($entry['jnxPMCurTxOutputPower'])) {
+        $oid = '.1.3.6.1.4.1.2636.3.71.1.2.1.1.7.'.$index;
+        $descr = dbFetchCell('SELECT `ifDescr` FROM `ports` WHERE `ifIndex`= ? AND `device_id` = ?', array($index, $device['device_id'])) . ' Tx Power';
+        #$limit_low = $entry['jnxDomCurrentTxLaserOutputPowerLowAlarmThreshold']/$divisor;
+        $limit_low = null;
+        #$warn_limit_low = $entry['jnxDomCurrentTxLaserOutputPowerLowWarningThreshold']/$divisor;
+        $warn_limit_low = null;
+        #$limit = $entry['jnxDomCurrentModuleTemperatureHighAlarmThreshold']/$divisor;
+        $limit = null;
+        #$warn_limit = $entry['jnxDomCurrentModuleTemperatureHighWarningThreshold']/$divisor;
+        $warn_limit = null;
+        $current = $entry['jnxPMCurTxOutputPower'];
+        $entPhysicalIndex = $index;
+        $entPhysicalIndex_measured = 'ports';
+        discover_sensor($valid['sensor'], 'dbm', $device, $oid, 'tx-'.$index, 'junos', $descr, $divisor, $multiplier, $limit_low, $warn_limit_low, $warn_limit, $limit, $current, 's
+nmp', $entPhysicalIndex, $entPhysicalIndex_measured);
+    }
+}
