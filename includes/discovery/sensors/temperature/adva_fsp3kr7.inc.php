@@ -28,6 +28,7 @@ if (is_array($pre_cache['adva_fsp3kr7_Card'])) {
         if ($pre_cache['adva_fsp3kr7_Card'][$index]['eqptPhysInstValueTemp']) {
             $oid        = '.1.3.6.1.4.1.2544.1.11.11.1.2.1.1.1.5.'.$index;
             $descr      = $pre_cache['adva_fsp3kr7_Card'][$index]['entityEqptAidString'];
+            $descr      = $descr .' ' . $pre_cache['adva_fsp3kr7_Card'][$index]['advaInventoryUnitName'];
             $high_limit = $pre_cache['adva_fsp3kr7_Card'][$index]['eqptPhysThresholdTempHigh']/$divisor;
             $current    = $pre_cache['adva_fsp3kr7_Card'][$index]['eqptPhysInstValueTemp']/$divisor;
 
