@@ -1,0 +1,12 @@
+mib:  NORTEL-OPTICAL-GENERIC-MIB
+modules:
+    sensors:
+        dgd:
+            data:
+                -
+                    oid: nnOpticalPm15MinMonTypeDescr
+                    value: nnOpticalPm15MinValue
+                    divisor: 10
+                    num_oid: .1.3.6.1.4.1.562.68.10.1.1.4.1.1.1.7.
+                    descr: nnOpticalPm15MinMonTypeDescr
+                    index: 'nnOpticalPm15MinValue.{{ $index }}'
