@@ -15,7 +15,7 @@ echo 'JunOS ';
 $multiplier = 1;
 $divisor    = 10;
 foreach ($pre_cache['junos_ifoptics_oids'] as $index => $entry) {
-   if (is_numeric($entry['jnxPMCurQ'])) {
+    if (is_numeric($entry['jnxPMCurQ'])) {
         $oid = '.1.3.6.1.4.1.2636.3.71.1.2.1.1.5.'.$index;
         $interface = dbFetchCell('SELECT `ifDescr` FROM `ports` WHERE `ifIndex`= ? AND `device_id` = ?', array($index, $device['device_id']));
         $descr = $interface . ' Q2-factor';
