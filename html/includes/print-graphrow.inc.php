@@ -53,7 +53,7 @@ foreach ($periods as $period => $period_tex) {
     $link = generate_url($link_array);
 
     if ($return_data === true) {
-        $graph_data[] = overlib_link($link, $generate_lazy_graph_tag($graph_array), generate_graph_tag($graph_array_zoom), null);
+        $graph_data[] = overlib_link($link, generate_lazy_graph_tag($graph_array), generate_graph_tag($graph_array_zoom), null);
     } else {
         echo "<div class='col-md-3'>";
         echo(overlib_link($link, generate_lazy_graph_tag($graph_array), generate_graph_tag($graph_array_zoom), null));
