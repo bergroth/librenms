@@ -27,4 +27,3 @@ $pre_cache['junos_ifotn_oids'] = snmpwalk_cache_multi_oid($device, 'jnxoptIfOTNP
 
 echo 'JnxoptIfOTNPMFECCurrentEntry ';
 $pre_cache['junos_prefec_oids'] = snmpwalk_cache_multi_oid($device, 'jnxoptIfOTNPMCurrentFECMinBERMantissa', array(), 'JNX-OPT-IF-EXT-MIB', 'junos');
-

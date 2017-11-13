@@ -52,6 +52,12 @@ if ($used_sensors['cooling']) {
 if ($used_sensors['toner']) {
     $datas[] = 'toner';
 }
+if ($used_sensors['delay']) {
+    $datas[] = 'delay';
+}
+if ($used_sensors['q_factor']) {
+    $datas[] = 'q_factor';
+}
 if ($used_sensors['chromatic_dispersion']) {
     $datas[] = 'chromatic_dispersion';
 }
@@ -83,6 +89,8 @@ $type_text['snr'] = "SNR";
 $type_text['pressure'] = "Pressure";
 $type_text['cooling'] = "Cooling";
 $type_text['toner'] = 'Toner';
+$type_text['delay'] = 'Delay';
+$type_text['q_factor'] = 'Q-factor';
 $type_text['chromatic_dispersion'] = 'Chromatic Dispersion';
 $type_text['prefec_ber'] = 'preFEC BER';
 
@@ -108,9 +116,7 @@ foreach ($datas as $texttype) {
     if ($vars['metric'] == $metric) {
         echo("<span class='pagemenu-selected'>");
     }
-
     echo(generate_link($type_text[$metric], $link_array, array('metric'=> $metric, 'view' => $vars['view'])));
-
     if ($vars['metric'] == $metric) {
         echo("</span>");
     }
@@ -137,7 +143,6 @@ if ($vars['view'] != "graphs") {
 }
 
 echo(generate_link("No Graphs", $link_array, array('metric'=> $vars['metric'], 'view' => "detail")));
-
 if ($vars['view'] != "graphs") {
     echo('</span>');
 }

@@ -74,6 +74,8 @@ $run_sensors = array(
     'snr',
     'pressure',
     'cooling',
+    'delay',
+    'q_factor',
     'chromatic_dispersion',
     'prefec_ber',
 );

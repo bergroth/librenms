@@ -13,13 +13,13 @@
 echo 'JunOS ';
 
 $multiplier = 1;
-$divisor    = 100;
+$divisor    = 10;
 foreach ($pre_cache['junos_ifoptics_oids'] as $index => $entry) {
     if (is_numeric($entry['jnxPMCurSNR'])) {
         $oid = '.1.3.6.1.4.1.2636.3.71.1.2.1.1.6.'.$index;
         #$descr = dbFetchCell('SELECT `ifDescr` FROM `ports` WHERE `ifIndex`= ? AND `device_id` = ?', array($index, $device['device_id'])) . ' electrical SNR';
         $interface = dbFetchCell('SELECT `ifDescr` FROM `ports` WHERE `ifIndex`= ? AND `device_id` = ?', array($index, $device['device_id']));
-	$descr = $interface . ' electrical SNR';
+        $descr = $interface . ' electrical SNR';
 /*	# create ifoptioc_aternative index et-0/0/0 eq 1.1.1.1 
 	$t = explode('/',$interface,3);
 	$t0 = explode('-',$t[0],2);
@@ -30,10 +30,10 @@ foreach ($pre_cache['junos_ifoptics_oids'] as $index => $entry) {
 */
         #$limit_low = $pre_cache['junos_ifoptics2_oids'][$alt_index]['jnxCarFreqOffsetLowThresh']*$multiplier;
         $limit_low = null;
-	$warn_limit_low = null;
+        $warn_limit_low = null;
         #$limit = $pre_cache['junos_ifoptics2_oids'][$alt_index]['jnxCarFreqOffsetHighThresh']*$multiplier;
-	$limit = null;
-	$warn_limit = null;
+        $limit = null;
+        $warn_limit = null;
         $current = $entry['jnxPMCurSNR'];
         $entPhysicalIndex = $index;
         $entPhysicalIndex_measured = 'ports';

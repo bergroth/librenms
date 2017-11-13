@@ -16,11 +16,11 @@ $multiplier = 1;
 $divisor    = 1;
 foreach ($pre_cache['junos_ifotn_oids'] as $index => $entry) {
     if (is_numeric($entry['jnxoptIfOTNPMCurrentFECBERMantissa'])) {
-	$index = substr_replace($index,'',-2);
+        $index = substr_replace($index, '', -2);
         $oid = '.1.3.6.1.4.1.2636.3.73.1.3.3.8.1.5.'.$index.'.1';
         #$descr = dbFetchCell('SELECT `ifDescr` FROM `ports` WHERE `ifIndex`= ? AND `device_id` = ?', array($index, $device['device_id'])) . ' electrical SNR';
         $interface = dbFetchCell('SELECT `ifDescr` FROM `ports` WHERE `ifIndex`= ? AND `device_id` = ?', array($index, $device['device_id']));
-	$descr = $interface . ' preFEC BER';
+        $descr = $interface . ' preFEC BER';
 /*	# create ifoptioc_aternative index et-0/0/0 eq 1.1.1.1 
 	$t = explode('/',$interface,3);
 	$t0 = explode('-',$t[0],2);
@@ -31,12 +31,12 @@ foreach ($pre_cache['junos_ifotn_oids'] as $index => $entry) {
 */
         #$limit_low = $pre_cache['junos_ifoptics2_oids'][$alt_index]['jnxCarFreqOffsetLowThresh']*$multiplier;
         $limit_low = null;
-	$warn_limit_low = null;
+        $warn_limit_low = null;
         #$limit = $pre_cache['junos_ifoptics2_oids'][$alt_index]['jnxCarFreqOffsetHighThresh']*$multiplier;
-	$limit = null;
-	$warn_limit = null;
-	$tmp_exp = $pre_cache['junos_ifotn_oids'][$index.".1"]['jnxoptIfOTNPMCurrentFECBERExponent'];
-        $current = ($entry['jnxoptIfOTNPMCurrentFECBERMantissa']/100)*pow(10,(-$tmp_exp));
+        $limit = null;
+        $warn_limit = null;
+        $tmp_exp = $pre_cache['junos_ifotn_oids'][$index.".1"]['jnxoptIfOTNPMCurrentFECBERExponent'];
+        $current = ($entry['jnxoptIfOTNPMCurrentFECBERMantissa']/100)*pow(10, (-$tmp_exp));
         $entPhysicalIndex = $index;
         $entPhysicalIndex_measured = 'ports';
         discover_sensor($valid['sensor'], 'prefec_ber', $device, $oid, $index, 'junos', $descr, $divisor, $multiplier, $limit_low, $warn_limit_low, $warn_limit, $limit, $current, 'snmp', $entPhysicalIndex, $entPhysicalIndex_measured);
