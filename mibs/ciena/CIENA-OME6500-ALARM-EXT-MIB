@@ -1,0 +1,426 @@
+-- MIB Revision 4
+
+CIENA-OME6500-ALARM-EXT-MIB DEFINITIONS ::= BEGIN
+
+   IMPORTS
+       cienaGenericMIBs    FROM CIENA-SMI
+
+       nlmLogName, nlmLogIndex FROM NOTIFICATION-LOG-MIB
+
+       TEXTUAL-CONVENTION,
+       DateAndTime         FROM SNMPv2-TC
+        
+       MODULE-IDENTITY,
+       OBJECT-IDENTITY,
+       OBJECT-TYPE,
+       NOTIFICATION-TYPE,
+       Integer32           FROM SNMPv2-SMI
+
+       SnmpAdminString     FROM SNMP-FRAMEWORK-MIB;
+
+ome6500ExtAlarmMIB MODULE-IDENTITY
+    LAST-UPDATED "201506300000Z"
+    ORGANIZATION "Ciena Corp." 
+    CONTACT-INFO 
+        	"  Mib Meister
+               115 North Sullivan Road
+               Spokane Valley, WA 99037
+               USA            
+               Phone:  +1 509 242 9000
+               Email:  support@ciena.com" 
+
+     DESCRIPTION  "This module contains objects that extend the IETF Alarm MIB"
+     
+     -- Revision history
+      REVISION "201507150000Z"
+      DESCRIPTION "Initial Version - created for OME6500 REL 11.1"         
+
+     ::= { cienaGenericMIBs 6 }
+
+ome6500ExtAlarmObjects    OBJECT IDENTIFIER ::= { ome6500ExtAlarmMIB 1 }
+ome6500AlarmObjects       OBJECT IDENTIFIER ::= { ome6500ExtAlarmMIB 2 }
+
+
+-- Textual Conventions
+
+Ome6500ExtAlarmEventType ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+         "Ciena OME6500 version of IANA Event Type"
+    SYNTAX       INTEGER
+          {
+          other  (1),
+          communicationsAlarm  (2),
+          qualityOfServiceAlarm  (3),
+          processingErrorAlarm  (4),
+          equipmentAlarm  (5),
+          environmentalAlarm  (6),
+          integrityViolation  (7),
+          operationalViolation  (8),
+          physicalViolation  (9),
+          securityServiceOrMechanismViolation  (10),
+          timeDomainViolation (11)
+          }
+
+-- Probable causes removed from this version, as the version we give
+-- customers contains duplicate probable causes which mosy does not like
+-- internally we don't use the probable cause values anyway.
+
+Ome6500ExtAlarmProbableCause ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+         "Ciena OME6500 version of IANA Probable Cause"
+    SYNTAX       INTEGER
+          {
+           indeterminate (0)
+          }
+
+ResourceId ::= TEXTUAL-CONVENTION
+    STATUS       current
+    DESCRIPTION
+         "Resource Identifier"
+    SYNTAX       OBJECT IDENTIFIER 
+
+-- Ciena OME6500 Extended Active Alarm Table
+
+ome6500ExtAlarmActiveTable OBJECT-TYPE
+  SYNTAX      SEQUENCE OF Ome6500ExtAlarmActiveEntry
+  MAX-ACCESS  not-accessible
+  STATUS      current
+  DESCRIPTION
+       "Ciena OME6500 Active Alarm Table Extension"
+  ::= { ome6500ExtAlarmObjects 1 }
+
+ome6500ExtAlarmActiveEntry OBJECT-TYPE
+  SYNTAX      Ome6500ExtAlarmActiveEntry
+  MAX-ACCESS  not-accessible
+  STATUS      current
+  DESCRIPTION
+       "Ciena OME6500 Active Alarm Table Extension Entry"
+--  AUGMENTS { alarmActiveEntry }
+  INDEX { ome6500ExtAlarmActiveEventType }
+  ::= { ome6500ExtAlarmActiveTable 1 }
+
+Ome6500ExtAlarmActiveEntry ::= SEQUENCE {
+  ome6500ExtAlarmActiveEventType                     Ome6500ExtAlarmEventType,
+  ome6500ExtAlarmActiveProbableCause                 Ome6500ExtAlarmProbableCause,
+  ome6500ExtAlarmActiveAdditionalText                SnmpAdminString,
+  ome6500ExtAlarmActiveDocumentationPointer          SnmpAdminString,
+  ome6500ExtAlarmActiveResourceDescription           SnmpAdminString,
+  ome6500ExtAlarmActiveManualClear                   INTEGER,
+  ome6500ExtAlarmActiveSequenceNumber                Integer32
+  }
+  
+
+ome6500ExtAlarmActiveEventType OBJECT-TYPE
+  SYNTAX       Ome6500ExtAlarmEventType
+  MAX-ACCESS   read-write
+  STATUS       current
+  DESCRIPTION
+        "Ciena OME6500 Active Alarm Table Extension Event Type"
+  ::= { ome6500ExtAlarmActiveEntry 1 }
+
+
+ome6500ExtAlarmActiveProbableCause OBJECT-TYPE
+  SYNTAX       Ome6500ExtAlarmProbableCause
+  MAX-ACCESS   read-write
+  STATUS       current
+  DESCRIPTION
+        "Ciena OME6500 Active Alarm Table Extension Probable Cause"
+  ::= { ome6500ExtAlarmActiveEntry 2 }
+
+ome6500ExtAlarmActiveAdditionalText OBJECT-TYPE
+  SYNTAX       SnmpAdminString
+  MAX-ACCESS   read-write
+  STATUS       current
+  DESCRIPTION
+        "Ciena OME6500 Active Alarm Table Extension Additional Text"
+  ::= { ome6500ExtAlarmActiveEntry 3 }
+
+ome6500ExtAlarmActiveDocumentationPointer OBJECT-TYPE
+  SYNTAX       SnmpAdminString
+  MAX-ACCESS   read-only
+  STATUS       current
+  DESCRIPTION
+        "Ciena OME6500 Active Alarm Table Extension Documentation Pointer"
+  ::= { ome6500ExtAlarmActiveEntry 4 }
+
+ome6500ExtAlarmActiveResourceDescription OBJECT-TYPE
+  SYNTAX       SnmpAdminString
+  MAX-ACCESS   read-only
+  STATUS       current
+  DESCRIPTION
+        "Ciena OME6500 Active Alarm Table Extension Resource Description"
+  ::= { ome6500ExtAlarmActiveEntry 5 }
+
+ome6500ExtAlarmActiveManualClear OBJECT-TYPE
+  SYNTAX       INTEGER  {
+                        other (1),
+                        forbidden (2),
+                        required (3),
+                        optional (4)
+                        }
+  MAX-ACCESS   read-only
+  STATUS       current
+  DESCRIPTION
+        "Ciena OME6500 Active Alarm Table Extension Manual Clear Indicator"
+  ::= { ome6500ExtAlarmActiveEntry 6 }
+
+ome6500ExtAlarmActiveSequenceNumber OBJECT-TYPE
+  SYNTAX       Integer32
+  MAX-ACCESS   read-only
+  STATUS       current
+  DESCRIPTION
+        "Ciena OME6500 Active Alarm Table Extension Sequence Number"
+  DEFVAL  { 0 }
+  ::= { ome6500ExtAlarmActiveEntry 7 }
+
+-- Definition Objects from Active Alarm Table in ALARM-MIB
+
+ome6500AlarmActiveResourceId OBJECT-TYPE
+  SYNTAX       INTEGER (0..65535)
+  MAX-ACCESS   read-only
+  STATUS       current
+  DESCRIPTION
+        "Ciena OME6500 Alarm Active Resource Id"
+  ::= { ome6500AlarmObjects 1 }
+
+ome6500AlarmActiveDateAndTime OBJECT-TYPE
+  SYNTAX       DateAndTime
+  MAX-ACCESS   not-accessible
+  STATUS       current
+  DESCRIPTION
+        "Ciena OME6500 Alarm Active Date & Time"
+  ::= { ome6500AlarmObjects 2 }
+
+ome6500AlarmActiveDescription OBJECT-TYPE
+  SYNTAX       SnmpAdminString
+  MAX-ACCESS   read-only
+  STATUS       current
+  DESCRIPTION
+           "Ciena OME6500 Alarm Active Description"
+  ::= { ome6500AlarmObjects 3 }
+
+
+ome6500ExtNotificationPrefix OBJECT-IDENTITY
+  STATUS       current
+  DESCRIPTION
+        "Ciena OME6500 NE alarm notifications prefix"
+  ::= { ome6500ExtAlarmObjects 0 }
+
+  -- Table of Information related to Messages
+  
+     ome6500ExtAlarmMessageTable OBJECT-TYPE
+      SYNTAX      SEQUENCE OF Ome6500ExtAlarmMessageEntry
+      MAX-ACCESS  not-accessible
+      STATUS      current
+      DESCRIPTION
+          "A table of information on messages. Entries are
+          added to this table when their corresponding 
+          notifications have been sent. Entires will be
+          removed from this table as outlined in the
+          Notification Log MIB [RFC3014]. Implementations
+          that do not support the Notification Log MIB should
+          provide behaviour for nlmLogName, nlmLogIndex and
+          this table as if they did."
+      ::= { ome6500ExtAlarmObjects 3 }
+
+  ome6500ExtAlarmMessageEntry OBJECT-TYPE
+      SYNTAX      Ome6500ExtAlarmMessageEntry
+      MAX-ACCESS  not-accessible
+      STATUS      current
+      DESCRIPTION
+          "An alarm message entry."               
+      INDEX       { nlmLogName, nlmLogIndex }
+      ::= { ome6500ExtAlarmMessageTable 1 } 
+      
+   Ome6500ExtAlarmMessageEntry ::= SEQUENCE {   
+       ome6500ExtAlarmMessageResource             ResourceId, 
+       ome6500ExtAlarmMessageResourceDescription  SnmpAdminString,
+       ome6500ExtAlarmMessageDateAndTime          DateAndTime,      
+       ome6500ExtAlarmMessageDocumentationPointer SnmpAdminString,
+       ome6500ExtAlarmMessageInfo                 SnmpAdminString
+    }        
+    
+    ome6500ExtAlarmMessageResource    OBJECT-TYPE
+      SYNTAX      ResourceId
+      MAX-ACCESS  read-only
+      STATUS      current
+      DESCRIPTION
+         "This object identifies the resource that this message pertains to
+
+         If there is no corresponding resource, then
+         the value of this object MUST be 0.0."
+      ::= { ome6500ExtAlarmMessageEntry 1 }    
+      
+     ome6500ExtAlarmMessageResourceDescription OBJECT-TYPE
+      SYNTAX      SnmpAdminString
+      MAX-ACCESS  read-only
+      STATUS       current
+      DESCRIPTION
+           "This is a textual description of the resource this message
+           pertains to.
+                          
+            The format of the string is as follows:
+		       NEtype=NEname;componentType=componentInstanceId;subcompType=subcompInstanceId;....
+
+ 	        With NE as the root, the entire containment with the list of Relative 
+ 	        Distinguished Names (RDNs) is presented upto the 
+            point where the messaging component is clearly identified. 
+            Semicolon is the delimiter between a 'category=value' pair.
+            The string can only contain alphanumeric characters and 
+            underscores. No commas, spaces, slashes, hyphens, or
+            dollar signs are allowed
+               "
+       ::= { ome6500ExtAlarmMessageEntry 2 }
+
+
+
+   ome6500ExtAlarmMessageDateAndTime OBJECT-TYPE
+      SYNTAX      DateAndTime
+      MAX-ACCESS  not-accessible
+      STATUS      current
+      DESCRIPTION
+          "The local date and time when the message originated.
+
+          Implementations MUST include the offset from UTC,
+          if available.  Implementation in environments in which
+          the UTC offset is not available is NOT RECOMMENDED."
+      ::= { ome6500ExtAlarmMessageEntry 3 }
+
+    ome6500ExtAlarmMessageDocumentationPointer OBJECT-TYPE
+      SYNTAX      SnmpAdminString
+      MAX-ACCESS  read-only
+      STATUS       current
+      DESCRIPTION
+               "This object servces as a pointer to documentation related to this
+               problem.
+               
+               If there is no specific document pointer for this alarm, this object
+               is a null length string."
+       ::= { ome6500ExtAlarmMessageEntry 4 }
+    
+   ome6500ExtAlarmMessageInfo OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+            "A textual discription of the event that has occurred,
+            suitable to display to an operator. "
+    ::= { ome6500ExtAlarmMessageEntry 5 }
+          
+    
+  -- all notification OIDs would be prefixed with a zero OID to 
+  -- facilitate  snmp v1<->v2 conversion
+
+-- Alarm Notifications
+
+        ome6500ExtAlarmClear NOTIFICATION-TYPE
+                        OBJECTS { ome6500AlarmActiveResourceId,
+                                  ome6500AlarmActiveDateAndTime,
+                                  ome6500AlarmActiveDescription,
+                                  ome6500ExtAlarmActiveEventType,
+                                  ome6500ExtAlarmActiveProbableCause,
+                                  ome6500ExtAlarmActiveAdditionalText,
+                                  ome6500ExtAlarmActiveDocumentationPointer,
+                                  ome6500ExtAlarmActiveResourceDescription,
+                                  ome6500ExtAlarmActiveSequenceNumber
+                                 }
+           STATUS current
+           DESCRIPTION
+             "Ciena OME6500 notification for an NE alarm clearing"
+        
+           ::= { ome6500ExtNotificationPrefix 301 }
+
+
+        ome6500ExtAlarmWarning NOTIFICATION-TYPE
+                        OBJECTS { ome6500AlarmActiveResourceId,
+                                  ome6500AlarmActiveDateAndTime,
+                                  ome6500AlarmActiveDescription,
+                                  ome6500ExtAlarmActiveEventType,
+                                  ome6500ExtAlarmActiveProbableCause,
+                                  ome6500ExtAlarmActiveAdditionalText,
+                                  ome6500ExtAlarmActiveDocumentationPointer,
+                                  ome6500ExtAlarmActiveResourceDescription,
+                                  ome6500ExtAlarmActiveManualClear,
+                                  ome6500ExtAlarmActiveSequenceNumber
+                                 }
+           STATUS current
+           DESCRIPTION
+             "Ciena OME6500 notification for an NE alarm of warning severity"
+        
+           ::= { ome6500ExtNotificationPrefix 302 }
+
+
+        ome6500ExtAlarmMinor NOTIFICATION-TYPE
+                        OBJECTS { ome6500AlarmActiveResourceId,
+                                  ome6500AlarmActiveDateAndTime,
+                                  ome6500AlarmActiveDescription,
+                                  ome6500ExtAlarmActiveEventType,
+                                  ome6500ExtAlarmActiveProbableCause,
+                                  ome6500ExtAlarmActiveAdditionalText,
+                                  ome6500ExtAlarmActiveDocumentationPointer,
+                                  ome6500ExtAlarmActiveResourceDescription,
+                                  ome6500ExtAlarmActiveManualClear,
+                                  ome6500ExtAlarmActiveSequenceNumber
+                                 }
+           STATUS current
+           DESCRIPTION
+             "Ciena OME6500 notification for an NE alarm of minor severity"
+        
+           ::= { ome6500ExtNotificationPrefix 303 }
+
+
+        ome6500ExtAlarmMajor NOTIFICATION-TYPE
+                        OBJECTS { ome6500AlarmActiveResourceId,
+                                  ome6500AlarmActiveDateAndTime,
+                                  ome6500AlarmActiveDescription,
+                                  ome6500ExtAlarmActiveEventType,
+                                  ome6500ExtAlarmActiveProbableCause,
+                                  ome6500ExtAlarmActiveAdditionalText,
+                                  ome6500ExtAlarmActiveDocumentationPointer,
+                                  ome6500ExtAlarmActiveResourceDescription,
+                                  ome6500ExtAlarmActiveManualClear,
+                                  ome6500ExtAlarmActiveSequenceNumber
+                                 }
+           STATUS current
+           DESCRIPTION
+             "Ciena OME6500 notification for an NE alarm of major severity"
+        
+           ::= { ome6500ExtNotificationPrefix 304 }
+
+
+        ome6500ExtAlarmCritical NOTIFICATION-TYPE
+                        OBJECTS { ome6500AlarmActiveResourceId,
+                                  ome6500AlarmActiveDateAndTime,
+                                  ome6500AlarmActiveDescription,
+                                  ome6500ExtAlarmActiveEventType,
+                                  ome6500ExtAlarmActiveProbableCause,
+                                  ome6500ExtAlarmActiveAdditionalText,
+                                  ome6500ExtAlarmActiveDocumentationPointer,
+                                  ome6500ExtAlarmActiveResourceDescription,
+                                  ome6500ExtAlarmActiveManualClear,
+                                  ome6500ExtAlarmActiveSequenceNumber
+                                 }
+           STATUS current
+           DESCRIPTION
+             "Ciena OME6500 notification for an NE alarm of critical severity"
+           ::= { ome6500ExtNotificationPrefix 305 }
+
+        ome6500ExtAlarmMessage NOTIFICATION-TYPE
+                        OBJECTS { ome6500ExtAlarmMessageResource, 
+                                  ome6500ExtAlarmMessageResourceDescription, 
+                                  ome6500ExtAlarmMessageDateAndTime,
+                                  ome6500ExtAlarmMessageDocumentationPointer,
+                                  ome6500ExtAlarmMessageInfo                  
+                                  }
+          STATUS  current
+          DESCRIPTION
+            "An informational message. This notification does not
+            correspond to an alarm so would not be stored in the
+            active alarm table and it does not have a corresponing
+            clear."
+           ::= { ome6500ExtNotificationPrefix 306 }
+
+
+END
