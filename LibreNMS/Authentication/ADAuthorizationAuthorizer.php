@@ -5,14 +5,21 @@ namespace LibreNMS\Authentication;
 use LibreNMS\Config;
 use LibreNMS\Exceptions\AuthenticationException;
 
-class ADAuthorizationAuthorizer extends AuthorizerBase
+class ADAuthorizationAuthorizer extends MysqlAuthorizer
 {
+    protected static $AUTH_IS_EXTERNAL = 1;
+    protected static $CAN_UPDATE_PASSWORDS = 0;
+
     protected $ldap_connection;
 
     public function __construct()
     {
         if (! isset($_SESSION['username'])) {
             $_SESSION['username'] = '';
+        }
+
+        if (!function_exists('ldap_connect')) {
+            throw new AuthenticationException("PHP does not support LDAP, please install or enable the PHP LDAP extension.");
         }
 
         // Disable certificate checking before connect if required
@@ -24,8 +31,7 @@ class ADAuthorizationAuthorizer extends AuthorizerBase
         // Set up connection to LDAP server
         $this->ldap_connection = @ldap_connect(Config::get('auth_ad_url'));
         if (! $this->ldap_connection) {
-            echo '<h2>Fatal error while connecting to AD url ' . Config::get('auth_ad_url') . ': ' . ldap_error($this->ldap_connection) . '</h2>';
-            exit;
+            throw new AuthenticationException('Fatal error while connecting to AD url ' . Config::get('auth_ad_url') . ': ' . ldap_error($this->ldap_connection));
         }
 
         // disable referrals and force ldap version to 3
@@ -79,12 +85,6 @@ class ADAuthorizationAuthorizer extends AuthorizerBase
         } else {
             return false;
         }
-    }
-
-    protected function userExistsInDb($username)
-    {
-        $return = dbFetchCell('SELECT COUNT(*) FROM users WHERE username = ?', array($username), true);
-        return $return;
     }
 
     public function userExists($username, $throw_exception = false)
@@ -172,18 +172,6 @@ class ADAuthorizationAuthorizer extends AuthorizerBase
         return $user_id;
     }
 
-
-    public function deleteUser($userid)
-    {
-        dbDelete('bill_perms', '`user_id` =  ?', array($userid));
-        dbDelete('devices_perms', '`user_id` =  ?', array($userid));
-        dbDelete('ports_perms', '`user_id` =  ?', array($userid));
-        dbDelete('users_prefs', '`user_id` =  ?', array($userid));
-        dbDelete('users', '`user_id` =  ?', array($userid));
-        return dbDelete('users', '`user_id` =  ?', array($userid));
-    }
-
-
     public function getUserlist()
     {
         $userlist = array();
@@ -228,19 +216,6 @@ class ADAuthorizationAuthorizer extends AuthorizerBase
 
         return $userlist;
     }
-
-    public function getUser($user_id)
-    {
-        // not supported so return 0
-        return dbFetchRow('SELECT * FROM `users` WHERE `user_id` = ?', array($user_id), true);
-    }
-
-
-    public function updateUser($user_id, $realname, $level, $can_modify_passwd, $email)
-    {
-        dbUpdate(array('realname' => $realname, 'can_modify_passwd' => $can_modify_passwd, 'email' => $email), 'users', '`user_id` = ?', array($user_id));
-    }
-
 
     protected function getFullname($username)
     {

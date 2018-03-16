@@ -95,10 +95,10 @@ function logfile($string)
  */
 function getHostOS($device)
 {
-    $sysDescr    = snmp_get($device, "SNMPv2-MIB::sysDescr.0", "-Ovq");
-    $sysObjectId = snmp_get($device, "SNMPv2-MIB::sysObjectID.0", "-Ovqn");
+    $device['sysDescr']    = snmp_get($device, "SNMPv2-MIB::sysDescr.0", "-Ovq");
+    $device['sysObjectID'] = snmp_get($device, "SNMPv2-MIB::sysObjectID.0", "-Ovqn");
 
-    d_echo("| $sysDescr | $sysObjectId | \n");
+    d_echo("| {$device['sysDescr']} | {$device['sysObjectID']} | \n");
 
     $deferred_os = array(
         'freebsd',
@@ -110,7 +110,7 @@ function getHostOS($device)
     foreach ($os_defs as $os => $def) {
         if (isset($def['discovery']) && !in_array($os, $deferred_os)) {
             foreach ($def['discovery'] as $item) {
-                if (checkDiscovery($device, $item, $sysObjectId, $sysDescr)) {
+                if (checkDiscovery($device, $item)) {
                     return $os;
                 }
             }
@@ -131,7 +131,7 @@ function getHostOS($device)
     foreach ($deferred_os as $os) {
         if (isset($os_defs[$os]['discovery'])) {
             foreach ($os_defs[$os]['discovery'] as $item) {
-                if (checkDiscovery($device, $item, $sysObjectId, $sysDescr)) {
+                if (checkDiscovery($device, $item)) {
                     return $os;
                 }
             }
@@ -143,7 +143,7 @@ function getHostOS($device)
 
 /**
  * Check an array of conditions if all match, return true
- * sysObjectId if sysObjectId starts with any of the values under this item
+ * sysObjectID if sysObjectID starts with any of the values under this item
  * sysDescr if sysDescr contains any of the values under this item
  * sysDescr_regex if sysDescr matches any of the regexes under this item
  * snmpget perform an snmpget on `oid` and check if the result contains `value`. Other subkeys: options, mib, mibdir
@@ -151,12 +151,10 @@ function getHostOS($device)
  * Appending _except to any condition will invert the match.
  *
  * @param array $device
- * @param array $array Array of items, keys should be sysObjectId, sysDescr, or sysDescr_regex
- * @param string $sysObjectId The sysObjectId to check against
- * @param string $sysDescr the sysDesr to check against
+ * @param array $array Array of items, keys should be sysObjectID, sysDescr, or sysDescr_regex
  * @return bool the result (all items passed return true)
  */
-function checkDiscovery($device, $array, $sysObjectId, $sysDescr)
+function checkDiscovery($device, $array)
 {
     // all items must be true
     foreach ($array as $key => $value) {
@@ -164,20 +162,20 @@ function checkDiscovery($device, $array, $sysObjectId, $sysDescr)
             $key = substr($key, 0, -7);
         }
 
-        if ($key == 'sysObjectId') {
-            if (starts_with($sysObjectId, $value) == $check) {
+        if ($key == 'sysObjectID') {
+            if (starts_with($device['sysObjectID'], $value) == $check) {
                 return false;
             }
         } elseif ($key == 'sysDescr') {
-            if (str_contains($sysDescr, $value) == $check) {
+            if (str_contains($device['sysDescr'], $value) == $check) {
                 return false;
             }
         } elseif ($key == 'sysDescr_regex') {
-            if (preg_match_any($sysDescr, $value) == $check) {
+            if (preg_match_any($device['sysDescr'], $value) == $check) {
                 return false;
             }
-        } elseif ($key == 'sysObjectId_regex') {
-            if (preg_match_any($sysObjectId, $value) == $check) {
+        } elseif ($key == 'sysObjectID_regex') {
+            if (preg_match_any($device['sysObjectID'], $value) == $check) {
                 return false;
             }
         } elseif ($key == 'snmpget') {
@@ -659,29 +657,23 @@ function isPingable($hostname, $address_family = AF_INET, $attribs = array())
     $response = array();
     if (can_ping_device($attribs) === true) {
         $fping_params = '';
-        if (is_numeric($config['fping_options']['retries']) && $config['fping_options']['retries'] > 0) {
-            if ($config['fping_options']['retries'] > 20) {
-                $config['fping_options']['retries'] = 20;
-            }
-            $fping_params .= ' -r ' . $config['fping_options']['retries'];
-        }
         if (is_numeric($config['fping_options']['timeout'])) {
             if ($config['fping_options']['timeout'] < 50) {
                 $config['fping_options']['timeout'] = 50;
             }
-            if ($config['fping_options']['millisec'] < $config['fping_options']['timeout']) {
-                $config['fping_options']['millisec'] = $config['fping_options']['timeout'];
+            if ($config['fping_options']['interval'] < $config['fping_options']['timeout']) {
+                $config['fping_options']['interval'] = $config['fping_options']['timeout'];
             }
             $fping_params .= ' -t ' . $config['fping_options']['timeout'];
         }
         if (is_numeric($config['fping_options']['count']) && $config['fping_options']['count'] > 0) {
             $fping_params .= ' -c ' . $config['fping_options']['count'];
         }
-        if (is_numeric($config['fping_options']['millisec'])) {
-            if ($config['fping_options']['millisec'] < 20) {
-                $config['fping_options']['millisec'] = 20;
+        if (is_numeric($config['fping_options']['interval'])) {
+            if ($config['fping_options']['interval'] < 20) {
+                $config['fping_options']['interval'] = 20;
             }
-            $fping_params .= ' -p ' . $config['fping_options']['millisec'];
+            $fping_params .= ' -p ' . $config['fping_options']['interval'];
         }
         $status = fping($hostname, $fping_params, $address_family);
         if ($status['exitcode'] > 0 || $status['loss'] == 100) {
@@ -764,7 +756,7 @@ function createHost(
 
     $device = array(
         'hostname' => $host,
-        'sysName' => $host,
+        'sysName' => $additional['sysName'] ? $additional['sysName'] : $host,
         'os' => $additional['os'] ? $additional['os'] : 'generic',
         'hardware' => $additional['hardware'] ? $additional['hardware'] : null,
         'community' => $community,
@@ -846,14 +838,10 @@ function match_network($nets, $ip, $first = false)
 // FIXME port to LibreNMS\Util\IPv6 class
 function snmp2ipv6($ipv6_snmp)
 {
-    $ipv6 = explode('.', $ipv6_snmp);
-    $ipv6_2 = array();
-
     # Workaround stupid Microsoft bug in Windows 2008 -- this is fixed length!
     # < fenestro> "because whoever implemented this mib for Microsoft was ignorant of RFC 2578 section 7.7 (2)"
-    if (count($ipv6) == 17 && $ipv6[0] == 16) {
-        array_shift($ipv6);
-    }
+    $ipv6 = array_slice(explode('.', $ipv6_snmp), -16);
+    $ipv6_2 = array();
 
     for ($i = 0; $i <= 15; $i++) {
         $ipv6[$i] = zeropad(dechex($ipv6[$i]));
@@ -863,17 +851,6 @@ function snmp2ipv6($ipv6_snmp)
     }
 
     return implode(':', $ipv6_2);
-}
-
-function ipv62snmp($ipv6)
-{
-    try {
-        $ipv6 = IP::parse($ipv6)->uncompressed();
-        $ipv6_split = str_split(str_replace(':', '', $ipv6), 2);
-        return implode('.', array_map('hexdec', $ipv6_split));
-    } catch (InvalidIpException $e) {
-        return '';
-    }
 }
 
 function get_astext($asn)
@@ -1092,12 +1069,12 @@ function is_port_valid($port, $device)
     $ifAlias = $port['ifAlias'];
     $ifType  = $port['ifType'];
 
-    if (str_contains($ifDescr, Config::getOsSetting($device['os'], 'good_if'), true)) {
+    if (str_i_contains($ifDescr, Config::getOsSetting($device['os'], 'good_if'))) {
         return true;
     }
 
     foreach (Config::getCombined($device['os'], 'bad_if') as $bi) {
-        if (str_contains($ifDescr, $bi, true)) {
+        if (str_i_contains($ifDescr, $bi)) {
             d_echo("ignored by ifDescr: $ifDescr (matched: $bi)\n");
             return false;
         }
@@ -2010,48 +1987,63 @@ function get_toner_levels($device, $raw_value, $capacity)
  */
 function initStats()
 {
-    global $snmp_stats, $db_stats, $rrd_stats;
+    global $snmp_stats, $rrd_stats;
 
-    if (!isset($snmp_stats)) {
+    if (!isset($snmp_stats, $rrd_stats)) {
         $snmp_stats = array(
-            'snmpget' => 0,
-            'snmpget_sec' => 0.0,
-            'snmpgetnext' => 0,
-            'snmpgetnext_sec' => 0.0,
-            'snmpwalk' => 0,
-            'snmpwalk_sec' => 0.0,
+            'ops' => array(
+                'snmpget' => 0,
+                'snmpgetnext' => 0,
+                'snmpwalk' => 0,
+            ),
+            'time' => array(
+                'snmpget' => 0.0,
+                'snmpgetnext' => 0.0,
+                'snmpwalk' => 0.0,
+            )
         );
-    }
 
-    if (!isset($db_stats)) {
-        $db_stats = array(
-            'insert' => 0,
-            'insert_sec' => 0.0,
-            'update' => 0,
-            'update_sec' => 0.0,
-            'delete' => 0,
-            'delete_sec' => 0.0,
-            'fetchcell' => 0,
-            'fetchcell_sec' => 0.0,
-            'fetchcolumn' => 0,
-            'fetchcolumn_sec' => 0.0,
-            'fetchrow' => 0,
-            'fetchrow_sec' => 0.0,
-            'fetchrows' => 0,
-            'fetchrows_sec' => 0.0,
-        );
-    }
-
-    if (!isset($rrd_stats)) {
         $rrd_stats = array(
-            'update' => 0,
-            'update_sec' => 0.0,
-            'create' => 0,
-            'create_sec' => 0.0,
-            'other' => 0,
-            'other_sec' => 0.0,
+            'ops' => array(
+                'update' => 0,
+                'create' => 0,
+                'other' => 0,
+            ),
+            'time' => array(
+                'update' => 0.0,
+                'create' => 0.0,
+                'other' => 0.0,
+            ),
         );
     }
+}
+
+/**
+ * Print out the stats totals since the last time this function was called
+ *
+ * @param bool $update_only Only update the stats checkpoint, don't print them
+ */
+function printChangedStats($update_only = false)
+{
+    global $snmp_stats, $db_stats, $rrd_stats;
+    global $snmp_stats_last, $db_stats_last, $rrd_stats_last;
+
+    if (!$update_only) {
+        printf(
+            ">> SNMP: [%d/%.2fs] MySQL: [%d/%.2fs] RRD: [%d/%.2fs]\n",
+            array_sum($snmp_stats['ops']) - array_sum($snmp_stats_last['ops']),
+            array_sum($snmp_stats['time']) - array_sum($snmp_stats_last['time']),
+            array_sum($db_stats['ops']) - array_sum($db_stats_last['ops']),
+            array_sum($db_stats['time']) - array_sum($db_stats_last['time']),
+            array_sum($rrd_stats['ops']) - array_sum($rrd_stats_last['ops']),
+            array_sum($rrd_stats['time']) - array_sum($rrd_stats_last['time'])
+        );
+    }
+
+    // make a new checkpoint
+    $snmp_stats_last = $snmp_stats;
+    $db_stats_last = $db_stats;
+    $rrd_stats_last = $rrd_stats;
 }
 
 /**
@@ -2062,42 +2054,45 @@ function printStats()
     global $snmp_stats, $db_stats, $rrd_stats;
 
     printf(
-        "SNMP %.2fs: Get[%d/%.2fs] Getnext [%d/%.2fs] Walk [%d/%.2fs]\n",
-        $snmp_stats['snmpget_sec'] + $snmp_stats['snmpgetnext_sec'] + $snmp_stats['snmpwalk_sec'],
-        $snmp_stats['snmpget'],
-        $snmp_stats['snmpget_sec'],
-        $snmp_stats['snmpgetnext'],
-        $snmp_stats['snmpgetnext_sec'],
-        $snmp_stats['snmpwalk'],
-        $snmp_stats['snmpwalk_sec']
+        "SNMP [%d/%.2fs]: Get[%d/%.2fs] Getnext[%d/%.2fs] Walk[%d/%.2fs]\n",
+        array_sum($snmp_stats['ops']),
+        array_sum($snmp_stats['time']),
+        $snmp_stats['ops']['snmpget'],
+        $snmp_stats['time']['snmpget'],
+        $snmp_stats['ops']['snmpgetnext'],
+        $snmp_stats['time']['snmpgetnext'],
+        $snmp_stats['ops']['snmpwalk'],
+        $snmp_stats['time']['snmpwalk']
     );
     printf(
-        "MySQL %.2fs: Cell[%d/%.2fs] Row[%d/%.2fs] Rows[%d/%.2fs] Column[%d/%.2fs] Update[%d/%.2fs] Insert[%d/%.2fs] Delete[%d/%.2fs]\n",
-        $db_stats['fetchcell_sec'] + $db_stats['fetchrow_sec'] + $db_stats['fetchrows_sec'] + $db_stats['fetchcolumn_sec'] + $db_stats['update_sec'] + $db_stats['insert_sec'] + $db_stats['delete_sec'],
-        $db_stats['fetchcell'],
-        $db_stats['fetchcell_sec'],
-        $db_stats['fetchrow'],
-        $db_stats['fetchrow_sec'],
-        $db_stats['fetchrows'],
-        $db_stats['fetchrows_sec'],
-        $db_stats['fetchcolumn'],
-        $db_stats['fetchcolumn_sec'],
-        $db_stats['update'],
-        $db_stats['update_sec'],
-        $db_stats['insert'],
-        $db_stats['insert_sec'],
-        $db_stats['delete'],
-        $db_stats['delete_sec']
+        "MySQL [%d/%.2fs]: Cell[%d/%.2fs] Row[%d/%.2fs] Rows[%d/%.2fs] Column[%d/%.2fs] Update[%d/%.2fs] Insert[%d/%.2fs] Delete[%d/%.2fs]\n",
+        array_sum($db_stats['ops']),
+        array_sum($db_stats['time']),
+        $db_stats['ops']['fetchcell'],
+        $db_stats['time']['fetchcell'],
+        $db_stats['ops']['fetchrow'],
+        $db_stats['time']['fetchrow'],
+        $db_stats['ops']['fetchrows'],
+        $db_stats['time']['fetchrows'],
+        $db_stats['ops']['fetchcolumn'],
+        $db_stats['time']['fetchcolumn'],
+        $db_stats['ops']['update'],
+        $db_stats['time']['update'],
+        $db_stats['ops']['insert'],
+        $db_stats['time']['insert'],
+        $db_stats['ops']['delete'],
+        $db_stats['time']['delete']
     );
     printf(
-        "RRD %.2fs: Update [%d/%.2fs] Create [%d/%.2fs] Other [%d/%.2fs]\n",
-        $rrd_stats['update_sec'] + $rrd_stats['create_sec'] + $rrd_stats['other_sec'],
-        $rrd_stats['update'],
-        $rrd_stats['update_sec'],
-        $rrd_stats['create'],
-        $rrd_stats['create_sec'],
-        $rrd_stats['other'],
-        $rrd_stats['other_sec']
+        "RRD [%d/%.2fs]: Update[%d/%.2fs] Create [%d/%.2fs] Other[%d/%.2fs]\n",
+        array_sum($rrd_stats['ops']),
+        array_sum($rrd_stats['time']),
+        $rrd_stats['ops']['update'],
+        $rrd_stats['time']['update'],
+        $rrd_stats['ops']['create'],
+        $rrd_stats['time']['create'],
+        $rrd_stats['ops']['other'],
+        $rrd_stats['time']['other']
     );
 }
 
@@ -2114,38 +2109,10 @@ function recordRrdStatistic($stat, $start_time)
     initStats();
 
     $stat = ($stat == 'update' || $stat == 'create') ? $stat : 'other';
-    $runtime = microtime(true) - $start_time;
-    $rrd_stats[$stat]++;
-    $rrd_stats["${stat}_sec"] += $runtime;
-
-    return $runtime;
-}
-
-/**
- * Update statistics for db operations
- *
- * @param string $stat fetchcell, fetchrow, fetchrows, fetchcolumn, update, insert, delete
- * @param float $start_time The time the operation started with 'microtime(true)'
- * @return float  The calculated run time
- */
-function recordDbStatistic($stat, $start_time)
-{
-    global $db_stats;
-    initStats();
 
     $runtime = microtime(true) - $start_time;
-    $db_stats[$stat]++;
-    $db_stats["${stat}_sec"] += $runtime;
-
-    //double accounting corrections
-    if ($stat == 'fetchcolumn') {
-        $db_stats['fetchrows']--;
-        $db_stats['fetchrows_sec'] -= $runtime;
-    }
-    if ($stat == 'fetchcell') {
-        $db_stats['fetchrow']--;
-        $db_stats['fetchrow_sec'] -= $runtime;
-    }
+    $rrd_stats['ops'][$stat]++;
+    $rrd_stats['time'][$stat] += $runtime;
 
     return $runtime;
 }
@@ -2161,8 +2128,8 @@ function recordSnmpStatistic($stat, $start_time)
     initStats();
 
     $runtime = microtime(true) - $start_time;
-    $snmp_stats[$stat]++;
-    $snmp_stats["${stat}_sec"] += $runtime;
+    $snmp_stats['ops'][$stat]++;
+    $snmp_stats['time'][$stat] += $runtime;
     return $runtime;
 }
 
@@ -2242,7 +2209,7 @@ function cache_peeringdb()
         // We cache for 71 hours
         $cached = dbFetchCell("SELECT count(*) FROM `pdb_ix` WHERE (UNIX_TIMESTAMP() - timestamp) < 255600");
         if ($cached == 0) {
-            $rand = rand(30, 600);
+            $rand = rand(3, 30);
             echo "No cached PeeringDB data found, sleeping for $rand seconds" . PHP_EOL;
             sleep($rand);
             foreach (dbFetchRows("SELECT `bgpLocalAs` FROM `devices` WHERE `disabled` = 0 AND `ignore` = 0 AND `bgpLocalAs` > 0 AND (`bgpLocalAs` < 64512 OR `bgpLocalAs` > 65535) AND `bgpLocalAs` < 4200000000 GROUP BY `bgpLocalAs`") as $as) {
@@ -2362,6 +2329,11 @@ function dump_db_schema()
     return $output;
 }
 
+
+
+
+
+
 /**
  * Get an array of the schema files.
  * schema_version => full_file_name
@@ -2448,10 +2420,13 @@ function locate_binary($binary)
 {
     if (!str_contains($binary, '/')) {
         $output = `whereis -b $binary`;
-        $target = trim(substr($output, strpos($output, ':') + 1));
+        $list = trim(substr($output, strpos($output, ':') + 1));
+        $targets = explode(' ', $list);
 
-        if (file_exists($target)) {
-            return $target;
+        foreach ($targets as $target) {
+            if (is_executable($target)) {
+                return $target;
+            }
         }
     }
 

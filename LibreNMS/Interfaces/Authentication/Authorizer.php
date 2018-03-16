@@ -32,7 +32,7 @@ interface Authorizer
      * Check if a $username exists.
      *
      * @param string $username
-     * @param bool $throw_exception If this is enabled instead of returning false, this will throw an exception.
+     * @param bool $throw_exception Allows for a message to be sent to callers in case the user does not exist
      * @return bool
      */
     public function userExists($username, $throw_exception = false);
@@ -167,4 +167,20 @@ interface Authorizer
      * @return bool
      */
     public function sessionAuthenticated();
+
+    /**
+     * Indicates if the authentication happens within the LibreNMS process, or external to it.
+     * If the former, LibreNMS provides a login form, and the user must supply the username. If the latter, the authenticator supplies it via getExternalUsername() without user interaction.
+     * This is an important distinction, because at the point this is called if the authentication happens out of process, the user is already authenticated and LibreNMS must not display a login form - even if something fails.
+     *
+     * @return bool
+     */
+    public function authIsExternal();
+
+    /**
+     * The username provided by an external authenticator.
+     *
+     * @return string|null
+     */
+    public function getExternalUsername();
 }

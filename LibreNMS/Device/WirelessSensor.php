@@ -103,7 +103,7 @@ class WirelessSensor extends Sensor
         return $sensor;
     }
 
-    public static function discover(OS $os)
+    public static function runDiscovery(OS $os)
     {
         foreach (self::getTypes() as $type => $descr) {
             static::discoverType($os, $type);
@@ -175,6 +175,12 @@ class WirelessSensor extends Sensor
                 'unit' => 'dB',
                 'icon' => 'signal',
             ),
+            'ssr' => array(
+                'short' => 'SSR',
+                'long' => 'Signal Strength Ratio',
+                'unit' => 'dB',
+                'icon' => 'signal',
+            ),
             'mse' => array(
                 'short' => 'MSE',
                 'long' => 'Mean Square Error',
@@ -198,6 +204,13 @@ class WirelessSensor extends Sensor
                 'long' => 'Noise Floor',
                 'unit' => 'dBm/Hz',
                 'icon' => 'signal',
+            ),
+            'errors' => array(
+                'short' => 'Errors',
+                'long' => 'Errors',
+                'unit' => '',
+                'icon' => 'exclamation-triangle',
+                'type' => 'counter',
             ),
             'error-ratio' => array(
                 'short' => 'Error Ratio',

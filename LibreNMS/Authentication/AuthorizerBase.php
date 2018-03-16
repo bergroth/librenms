@@ -27,12 +27,13 @@ namespace LibreNMS\Authentication;
 use LibreNMS\Config;
 use LibreNMS\Interfaces\Authentication\Authorizer;
 use LibreNMS\Exceptions\AuthenticationException;
-use Phpass\PasswordHash;
 
 abstract class AuthorizerBase implements Authorizer
 {
     protected static $HAS_AUTH_USERMANAGEMENT = 0;
     protected static $CAN_UPDATE_USER = 0;
+    protected static $CAN_UPDATE_PASSWORDS = 0;
+    protected static $AUTH_IS_EXTERNAL = 0;
 
     /**
      * Log out the user, unset cookies, destroy the session
@@ -136,8 +137,7 @@ abstract class AuthorizerBase implements Authorizer
         } else {
             $token = strgen();
             $auth = strgen();
-            $hasher = new PasswordHash(8, false);
-            $token_id = $_SESSION['username'] . '|' . $hasher->HashPassword($_SESSION['username'] . $token);
+            $token_id = $_SESSION['username'] . '|' . password_hash($_SESSION['username'] . $token, PASSWORD_DEFAULT);
 
             $db_entry['session_username'] = $_SESSION['username'];
             $db_entry['session_token'] = $token;
@@ -164,12 +164,10 @@ abstract class AuthorizerBase implements Authorizer
         list($uname, $hash) = explode('|', $token);
         $session = dbFetchRow(
             "SELECT * FROM `session` WHERE `session_username`=? AND `session_value`=?",
-            array($uname, $sess_id),
-            true
+            array($uname, $sess_id)
         );
 
-        $hasher = new PasswordHash(8, false);
-        if ($hasher->CheckPassword($uname . $session['session_token'], $hash)) {
+        if (password_verify($uname . $session['session_token'], $hash)) {
             $_SESSION['username'] = $uname;
             return true;
         }
@@ -208,7 +206,7 @@ abstract class AuthorizerBase implements Authorizer
 
     public function canUpdatePasswords($username = '')
     {
-        return 0;
+        return static::$CAN_UPDATE_PASSWORDS;
     }
 
     public function changePassword($username, $newpassword)
@@ -243,5 +241,19 @@ abstract class AuthorizerBase implements Authorizer
     {
         //not supported by default
         return 0;
+    }
+
+    public function authIsExternal()
+    {
+        return static::$AUTH_IS_EXTERNAL;
+    }
+
+    public function getExternalUsername()
+    {
+        if (isset($_SERVER['REMOTE_USER'])) {
+            return clean($_SERVER['REMOTE_USER']);
+        } elseif (isset($_SERVER['PHP_AUTH_USER'])) {
+            return clean($_SERVER['PHP_AUTH_USER']);
+        }
     }
 }

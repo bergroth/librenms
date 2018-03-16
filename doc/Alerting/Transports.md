@@ -2,7 +2,7 @@ source: Alerting/Transports.md
 
 # Transports
 
-Transports are located within `includes/alerts/transports.*.php` and defined as well as configured via ~~`$config['alert']['transports']['Example'] = 'Some Options'`~~.
+Transports are located within `LibreNMS/Alert/Transport/` and defined as well as configured via ~~`$config['alert']['transports']['Example'] = 'Some Options'`~~.
 
 Contacts will be gathered automatically and passed to the configured transports.
 By default the Contacts will be only gathered when the alert triggers and will ignore future changes in contacts for the incident. If you want contacts to be re-gathered before each dispatch, please set ~~`$config['alert']['fixed-contacts'] = false;`~~ in your config.php.
@@ -199,6 +199,14 @@ __Note__: Currently ACK notifications are not transported to PagerDuty, This is 
 ## Pushover
 
 [Using a proxy?](../Support/Configuration.md#proxy-support)
+
+> You can configure these options within the WebUI now, please avoid setting these options within config.php
+
+If you want to change the [notification sounds](https://pushover.net/api#sounds) then add it in config options as:
+
+```php
+sound_critical=falling
+```
 
 Enabling Pushover support is fairly easy, there are only two required parameters.
 
@@ -448,4 +456,35 @@ $config['alert']['transports']['jira']['username']  = 'myjirauser';
 $config['alert']['transports']['jira']['password'] = 'myjirapass';
 $config['alert']['transports']['jira']['prjkey'][]  = 'JIRAPROJECTKEY';
 $config['alert']['transports']['jira']['issuetype'][]  = 'Myissuetype';
+```
+
+## Gitlab
+
+LibreNMS will create issues for warning and critical level alerts however only title and description are set.  Uses Personal access tokens to authenticate with Gitlab and will store the token in cleartext.
+
+```php
+$config['alert']['transports']['gitlab']['host'] = 'http://gitlab.host.tld';
+$config['alert']['transports']['gitlab']['project_id'] = '1';
+$config['alert']['transports']['gitlab']['key'] = 'AbCdEf12345';
+```
+
+## Philips Hue
+
+Want to spice up your noc life? LibreNMS will flash all lights connected to your philips hue bridge whenever an alert is triggered. 
+
+To setup, go to the you http://`your-bridge-ip`/debug/clip.html
+
+- Update the "URL:" field to `/api`
+- Paste this in the "Message Body" {"devicetype":"librenms"}
+- Press the round button on your `philips Hue Bridge`
+- Click on `POST`
+- In the `Command Response` You should see output with your username. Copy this without the quotes
+
+
+More Info: [Philips Hue Documentation](https://www.developers.meethue.com/documentation/getting-started)
+
+```php
+$config['alert']['transports']['hue']['bridge'] = 'http://bridge.example.com';
+$config['alert']['transports']['hue']['user'] = 'af89jauaf98aj34r';
+$config['alert']['transports']['hue']['duration'] = 'lselect';
 ```

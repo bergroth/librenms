@@ -30,7 +30,7 @@ if ($stage > 3) {
 require realpath(__DIR__ . '/..') . '/includes/init.php';
 
 // List of php modules we expect to see
-$modules = array('gd','mysqli','mcrypt');
+$modules = array('gd','mysqli');
 
 $dbhost = @$_POST['dbhost'] ?: 'localhost';
 $dbuser = @$_POST['dbuser'] ?: 'librenms';
@@ -221,9 +221,12 @@ echo "</td></tr>";
       <div class="col-md-6 col-md-offset-3">
         <form class="form-inline" role="form" method="post">
           <input type="hidden" name="stage" value="1">
-          <button type="submit" class="btn btn-success pull-right" <?php if (!$complete) {
+          <button type="submit" class="btn btn-success pull-right"
+            <?php
+            if (!$complete) {
                 echo "disabled='disabled'";
-} ?>>Next Stage</button>
+            }
+            ?>>Next Stage</button>
         </form>
       </div>
     </div>
@@ -363,11 +366,6 @@ $config_file = <<<"EOD"
 //Please ensure this user is created and has the correct permissions to your install
 \$config['user'] = 'librenms';
 
-### Memcached config - We use this to store realtime usage
-\$config\['memcached'\]\['enable'\]  = FALSE;
-\$config\['memcached'\]\['host'\]    = "localhost";
-\$config\['memcached'\]\['port'\]    = 11211;
-
 ### Locations - it is recommended to keep the default
 #\$config\['install_dir'\]  = "$install_dir";
 
@@ -391,8 +389,9 @@ $config_file = <<<"EOD"
 #\$config\['nets'\]\[\] = "172.16.0.0/12";
 #\$config\['nets'\]\[\] = "192.168.0.0/16";
 
-# Uncomment the next line to disable daily updates
-#\$config\['update'\] = 0;
+# Update configuration
+#\$config\['update_channel'\] = 'release';  # uncomment to follow the monthly release channel
+#\$config\['update'\] = 0;  # uncomment to completely disable updates
 EOD;
 
 if (!file_exists("../config.php")) {
@@ -498,9 +497,12 @@ if (Auth::get()->canManageUsers()) {
           <input type="hidden" name="dbpass" value="<?php echo $dbpass; ?>">
           <input type="hidden" name="dbname" value="<?php echo $dbname; ?>">
           <input type="hidden" name="dbsocket" value="<?php echo $dbsocket; ?>">
-          <button type="submit" class="btn btn-success pull-right" <?php if ($proceed == "1") {
+          <button type="submit" class="btn btn-success pull-right"
+            <?php
+            if ($proceed == "1") {
                 echo "disabled='disabled'";
-} ?>>Generate Config</button>
+            }
+            ?>>Generate Config</button>
         </form>
       </div>
       <div class="col-md-3">

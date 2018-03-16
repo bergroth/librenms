@@ -68,20 +68,28 @@ Please see [1 Minute polling](1-Minute-Polling.md) for information on configurin
 ```php
 $config['fping']            = "/usr/bin/fping";
 $config['fping6']           = "fping6";
-$config['fping_options']['retries'] = 3;
 $config['fping_options']['timeout'] = 500;
 $config['fping_options']['count'] = 3;
-$config['fping_options']['millisec'] = 200;
+$config['fping_options']['interval'] = 500;
 ```
 `fping` configuration options:
 
-* `retries` (`fping` parameter `-r`): Number of times an attempt at pinging a target will be made, not including the first try.
-* `timeout` (`fping` parameter `-t`): Amount of time that fping waits for a response to its first request (in milliseconds).
+* `timeout` (`fping` parameter `-t`): Amount of time that fping waits for a response to its first request (in milliseconds). **See note below**
 * `count` (`fping` parameter `-c`): Number of request packets to send to each target.
-* `millisec` (`fping` parameter `-p`): Time in milliseconds that fping waits between successive packets to an individual target.
+* `interval` (`fping` parameter `-p`): Time in milliseconds that fping waits between successive packets to an individual target.
+
+> NOTE: Setting a higher timeout value than the interval value can lead to slowing down poller. Example:
+>
+> timeout: 3000
+>
+> count: 3
+>
+> interval: 500
+>
+> In this example, interval will be overwritten by the timeout value of 3000 which is 3 seconds. As we send three icmp packets (count: 3), each one is delayed by 3 seconds which will result in fping taking > 6 seconds to return results.
 
 You can disable the fping / icmp check that is done for a device to be determined to be up on a global or per device basis.
-**We don't advice disabling the fping / icmp check unless you know the impact, at worst if you have a large number of devices down
+**We don't advise disabling the fping / icmp check unless you know the impact, at worst if you have a large number of devices down
 then it's possible that the poller would no longer complete in 5 minutes due to waiting for snmp to timeout.**
 
 Globally disable fping / icmp check:
@@ -130,10 +138,6 @@ We can also make use of one of these environment variables which can be set in `
 http_proxy=proxy.domain.com
 https_proxy=proxy.domain.com
 ```
-
-### Memcached
-
-[Memcached](../Extensions/Memcached.md)
 
 ### RRDCached
 
@@ -313,6 +317,10 @@ The target maximum hostname length when applying the shorthost() function.
 You can increase this if you want to try and fit more of the hostname in graph titles.
 The default value is 12
 However, this can possibly break graph generation if this is very long.
+
+### Stacked Graphs
+You can enable stacked graphs instead of the default inverted graphs. 
+Enabling them is possible via webui Global Settings -> Webui Settings -> Graph settings -> Use stacked graphs
 
 ### Add host settings
 The following setting controls how hosts are added.  If a host is added as an ip address it is checked to ensure the ip is not already present.  If the ip is present the host is not added.

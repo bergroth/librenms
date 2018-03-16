@@ -259,11 +259,13 @@ class IRCBot
             if ($this->config['irc_alert_chan']) {
                 foreach ($this->config['irc_alert_chan'] as $chan) {
                     $this->ircRaw('PRIVMSG '.$chan.' :'.$severity.trim($alert['title']));
-                    foreach (explode("\n", $alert['msg']) as $line) {
-                        // We don't need to repeat the title
-                        $line = strip_tags($line);
-                        if (trim($line) != trim($alert['title'])) {
-                            $this->ircRaw('PRIVMSG '.$chan.' :'.$line);
+                    if (!$this->config['irc_alert_short']) { // Only send the title if set to short
+                        foreach (explode("\n", $alert['msg']) as $line) {
+                            // We don't need to repeat the title
+                            $line = strip_tags($line);
+                            if (trim($line) != trim($alert['title'])) {
+                                $this->ircRaw('PRIVMSG '.$chan.' :'.$line);
+                            }
                         }
                     }
                 }
@@ -271,11 +273,13 @@ class IRCBot
                 foreach ($this->authd as $nick => $data) {
                     if ($data['expire'] >= time()) {
                         $this->ircRaw('PRIVMSG '.$nick.' :'.$severity.trim($alert['title']));
-                        foreach (explode("\n", $alert['msg']) as $line) {
-                            // We don't need to repeat the title
-                            $line = strip_tags($line);
-                            if (trim($line) != trim($alert['title'])) {
-                                $this->ircRaw('PRIVMSG '.$nick.' :'.$line);
+                        if (!$this->config['irc_alert_short']) { // Only send the title if set to short
+                            foreach (explode("\n", $alert['msg']) as $line) {
+                                // We don't need to repeat the title
+                                $line = strip_tags($line);
+                                if (trim($line) != trim($alert['title'])) {
+                                    $this->ircRaw('PRIVMSG '.$nick.' :'.$line);
+                                }
                             }
                         }
                     }
@@ -858,7 +862,7 @@ class IRCBot
                 $srvign   = dbFetchCell("SELECT COUNT(*) FROM services WHERE service_ignore = 1".$d_a);
                 $srvdis   = dbFetchCell("SELECT COUNT(*) FROM services WHERE service_disabled = 1".$d_a);
                 $service_status = dbFetchRows("SELECT `service_status`, COUNT(*) AS `count` FROM `services` WHERE `service_disabled`=0 AND `service_ignore`=0 $d_a GROUP BY `service_status`");
-                $service_status = array_combine(array_column($service_status, 'service_status'), array_column($service_status, 'count')); // key by status
+                $service_status = array_column($service_status, 'count', 'service_status'); // key by status
 
                 foreach ($status_colors as $status => $color) {
                     if (isset($service_status[$status])) {

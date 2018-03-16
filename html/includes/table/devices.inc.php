@@ -1,4 +1,17 @@
 <?php
+/*
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.  Please see LICENSE.txt at the top level of
+ * the source code distribution for details.
+ *
+ * @package    LibreNMS
+ * @subpackage webui
+ * @link       http://librenms.org
+ * @copyright  2017 LibreNMS
+ * @author     LibreNMS Contributors
+*/
 
 $where = 1;
 $param = array();
@@ -114,32 +127,27 @@ if (!isset($_POST['format'])) {
 list($format, $subformat) = explode('_', $_POST['format']);
 
 foreach (dbFetchRows($sql, $param) as $device) {
-    if (isset($bg) && $bg == $list_colour_b) {
-        $bg = $list_colour_a;
+    if (isset($bg) && $bg == $config['list_colour']['odd']) {
+        $bg = $config['list_colour']['even'];
     } else {
-        $bg = $list_colour_b;
+        $bg = $config['list_colour']['odd'];
     }
 
     if ($device['status'] == '0') {
-        $extra = 'danger';
-        $msg = $device['status_reason'];
+        $extra = 'label-danger';
     } else {
-        $extra = 'success';
-        $msg = 'up';
+        $extra = 'label-success';
     }
 
     if ($device['ignore'] == '1') {
-        $extra = 'default';
-        $msg = 'ignored';
+        $extra = 'label-default';
         if ($device['status'] == '1') {
-            $extra = 'warning';
-            $msg = 'ignored';
+            $extra = 'label-warning';
         }
     }
 
     if ($device['disabled'] == '1') {
-        $extra = 'default';
-        $msg = 'disabled';
+        $extra = 'label-default';
     }
 
     $type = strtolower($device['os']);
@@ -169,14 +177,26 @@ foreach (dbFetchRows($sql, $param) as $device) {
     if ($subformat == 'detail') {
         $actions .= '</div><div class="row">';
     }
-
-    $actions .= '
-                <div class="col-xs-1"><a href="telnet://' . $device['hostname'] . '"><i class="fa fa-terminal fa-lg icon-theme" title="Telnet to ' . $device['hostname'] . '"></i></a></div>
-                <div class="col-xs-1"><a href="ssh://' . $device['hostname'] . '"><i class="fa fa-lock fa-lg icon-theme" title="SSH to ' . $device['hostname'] . '"></i></a></div>
-                <div class="col-xs-1"><a href="https://' . $device['hostname'] . '" target="_blank" rel="noopener"><i class="fa fa-globe fa-lg icon-theme" title="Launch browser https://' . $device['hostname'] . '"></i></a></div>
+    
+    
+        $actions .= '
+                    <div class="col-xs-1"><a href="telnet://' . $device['hostname'] . '"><i class="fa fa-terminal fa-lg icon-theme" title="Telnet to ' . $device['hostname'] . '"></i></a></div>
+                    ';
+    if (isset($config['gateone']['server'])) {
+        if ($config['gateone']['use_librenms_user'] == true) {
+                    $actions .= '<div class="col-xs-1"><a href="' . $config['gateone']['server'] . '?ssh=ssh://' . $_SESSION['username'] . '@' . $device['hostname'] . '&location=' . $device['hostname'] .'" target="_blank" rel="noopener"><i class="fa fa-lock fa-lg icon-theme" title="SSH to ' . $device['hostname'] . '"></i></a></div>';
+        } else {
+                    $actions .= '<div class="col-xs-1"><a href="' . $config['gateone']['server'] . '?ssh=ssh://' . $device['hostname'] . '&location=' . $device['hostname'] .'" target="_blank" rel="noopener"><i class="fa fa-lock fa-lg icon-theme" title="SSH to ' . $device['hostname'] . '"></i></a></div>';
+        }
+    } else {
+        $actions .= '<div class="col-xs-1"><a href="ssh://' . $device['hostname'] . '"><i class="fa fa-lock fa-lg icon-theme" title="SSH to ' . $device['hostname'] . '"></i></a></div>
+        ';
+    }
+        $actions .= '<div class="col-xs-1"><a href="https://' . $device['hostname'] . '" target="_blank" rel="noopener"><i class="fa fa-globe fa-lg icon-theme" title="Launch browser https://' . $device['hostname'] . '"></i></a></div>
+                </div>
             </div>
-        </div>
-    ';
+        ';
+    
     $hostname = generate_device_link($device);
 
     if (extension_loaded('mbstring')) {
@@ -190,11 +210,7 @@ foreach (dbFetchRows($sql, $param) as $device) {
         $os = $device['os_text'] . '<br>' . $device['version'];
         $device['ip'] = inet6_ntop($device['ip']);
         $uptime = formatUptime($device['uptime'], 'short');
-        if (format_hostname($device) !== $device['sysName']) {
-            $hostname .= '<br />' . $device['sysName'];
-        } elseif ($device['hostname'] !== $device['ip']) {
-            $hostname .= '<br />' . $device['hostname'];
-        }
+        $hostname .= '<br />' . get_device_name($device);
 
         $metrics = array();
         if ($port_count) {
@@ -230,7 +246,6 @@ foreach (dbFetchRows($sql, $param) as $device) {
 
     $response[] = array(
         'extra' => $extra,
-        'msg' => $msg,
         'list_type' => $subformat,
         'icon' => $image,
         'hostname' => $hostname,
