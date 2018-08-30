@@ -4,9 +4,9 @@ use LibreNMS\Authentication\Auth;
 
 $no_refresh = true;
 
-if ($_SESSION['userlevel'] < '10') {
+if (!Auth::user()->hasGlobalAdmin()) {
     include 'includes/error-no-perm.inc.php';
-} elseif ($_SESSION['userlevel'] == 11) {
+} elseif (Auth::user()->isDemoUser()) {
     demo_account();
 } else {
     echo '<h3>Add User</h3>';
@@ -26,7 +26,7 @@ if ($_SESSION['userlevel'] < '10') {
 
                     // FIXME: missing email field here on the form
                     if (Auth::get()->addUser($_POST['new_username'], $_POST['new_password'], $_POST['new_level'], $_POST['new_email'], $_POST['new_realname'], $_POST['can_modify_passwd'])) {
-                        echo '<span class=info>User '.$_POST['username'].' added!</span>';
+                        echo '<span class=info>User '.$_POST['new_username'].' added!</span>';
                     }
                 } else {
                     echo '<div class="red">User with this name already exists!</div>';

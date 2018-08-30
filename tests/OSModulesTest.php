@@ -36,6 +36,22 @@ class OSModulesTest extends DBTestCase
      *
      * @group os
      * @dataProvider dumpedDataProvider
+     */
+    public function testDataIsValid($os, $variant, $modules)
+    {
+        // special case if data provider throws exception
+        if ($os === false) {
+            $this->fail($modules);
+        }
+
+        $this->assertNotEmpty($modules, "No modules to test for $os $variant");
+    }
+
+    /**
+     * Test all modules for a particular OS
+     *
+     * @group os
+     * @dataProvider dumpedDataProvider
      * @param string $os base os
      * @param string $variant optional variant
      * @param array $modules modules to test for this os
@@ -76,7 +92,7 @@ class OSModulesTest extends DBTestCase
                 "OS $os: Discovered $module data does not match that found in $filename\n"
                 . print_r(array_diff($expected, $actual), true)
                 . $helper->getDiscoveryOutput($debug ? null : $module)
-                . "\nOS $os: Polled $module data does not match that found in $filename"
+                . "\nOS $os: Discovered $module data does not match that found in $filename"
             );
 
             if ($expected_data[$module]['poller'] == 'matches discovery') {
@@ -105,6 +121,11 @@ class OSModulesTest extends DBTestCase
             $modules = explode(',', getenv('TEST_MODULES'));
         }
 
-        return ModuleTestHelper::findOsWithData($modules);
+        try {
+            return ModuleTestHelper::findOsWithData($modules);
+        } catch (InvalidModuleException $e) {
+            // special case for exception
+            return [[false, false, $e->getMessage()]];
+        }
     }
 }

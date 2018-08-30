@@ -138,16 +138,15 @@ if (!file_exists(Config::get('install_dir').'/config.php')) {
 
 
 // Connect to MySQL
-try {
-    dbConnect();
+\LibreNMS\DB\Eloquent::boot();
 
-    // pull in the database config settings
-    Config::loadFromDatabase();
-
+if (\LibreNMS\DB\Eloquent::isConnected()) {
     $validator->ok('Database connection successful', null, 'database');
-} catch (\LibreNMS\Exceptions\DatabaseConnectException $e) {
+} else {
     $validator->fail('Error connecting to your database. '.$e->getMessage(), null, 'database');
 }
+
+Config::load();
 
 $precheck_complete = true; // disable shutdown function
 print_header($validator->getVersions());
